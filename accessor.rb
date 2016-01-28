@@ -30,8 +30,8 @@ gateway.open("localhost", 3306) {|local_port|
   c.each {|record|
     puts record.uid
   }
-}
 =end
+}
 
 gateway = Net::SSH::Gateway.new('nrdb-01.gbnet', 'root', :port => 22, :password => ENV["ROOT_PASSWD"])
 if !gateway.active?
