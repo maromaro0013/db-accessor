@@ -1,4 +1,4 @@
-default: &default
+nrdb-01.gbnet:
   adapter: mysql2
   encoding: utf8
   pool: 5
@@ -7,7 +7,15 @@ default: &default
   host: 127.0.0.1
   port: 3306
   socket: /var/lib/mysql/mysql.sock
+  database:
 
-haru:
-  <<: *default
-  database: haru
+sadb-01:
+  adapter: mysql2
+  encoding: utf8
+  pool: 5
+  username: root
+  password:
+  host: 127.0.0.1
+  port: 3306
+  socket: /var/lib/mysql/mysql.sock
+  database:
