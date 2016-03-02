@@ -6,7 +6,7 @@ require 'pp'
 
 @db = YAML.load_file('./database.yml')
 adcords = YAML.load_file('./adcords.yml')
-@date_range = range = Time.gm(2016, 1, 1, 0, 0, 0)..Time.gm(2016, 1, 31, 23, 59, 59)
+@date_range = range = Time.gm(2016, 2, 1, 0, 0, 0)..Time.gm(2016, 2, 29, 23, 59, 59)
 CARRIERS = {'docomo' => 1, 'au' => 2, 'softbank' => 3, 'sp_docomo' => 6, 'sp_au' => 7, 'sp_softbank' => 9}
 
 adcode_uids = adcords
@@ -55,19 +55,23 @@ def get_monthly_payment_users
       site_users[site] = AnalyzePpvAll.where(start_date: @date_range).where(site_id: id).pluck(:uid)
       site_users[site] = site_users[site].uniq
     }
+    puts "payment_users," + site_users["haru"].count.to_s
+    puts "------"
 =end
-
     # 月の全体ユーザー従量購入者数(キャリアごと)(#10359)
+    amount = 0
     site_users = {}
     site_ids.each{|site, id|
       site_users[site] = {}
       CARRIERS.each{|name, carrier_id|
-        #puts AnalyzePpvAll.where(start_date: @date_range).where(site_id: id, carrier_id: carrier_id).to_sql
         site_users[site][name] = AnalyzePpvAll.where(start_date: @date_range).where(site_id: id, carrier_id: carrier_id).pluck(:uid)
         site_users[site][name] = site_users[site][name].uniq
+        amount += site_users[site][name].count
         puts name + "," + site_users[site][name].count.to_s
       }
     }
+    puts "amount," + amount.to_s
+
     puts "------"
     # 月の入会者を取得
     site_subscribes = {}
@@ -79,16 +83,37 @@ def get_monthly_payment_users
         puts name + "," + site_subscribes[site][name].count.to_s
       }
     }
+
     # 月の新規ユーザー従量購入者数
+    amount = 0
     payment_users = {}
     site_ids.each{|site, id|
       puts "---" + site + "---"
       payment_users[site] = {}
       CARRIERS.each{|name, carrier_id|
         payment_users[site][name] = site_users[site][name] & site_subscribes[site][name]
+        amount += payment_users[site][name].count
         puts name + "," + payment_users[site][name].count.to_s
       }
+      puts "amount," + amount.to_s
       puts "------"
+    }
+
+    # 新規ユーザー従量購入額
+    payment_amounts = {}
+    payment_users.each{|site, ids|
+      site_id = site_ids[site]
+      amount = 0
+
+      ids.each {|carrer, ary|
+        ary.each{|id|
+          ret = AnalyzePpvAll.where(start_date: @date_range).where(site_id: site_id).where(uid: id).pluck(:charge)
+          amount += ret.inject(:+)
+        }
+      }
+
+      payment_amounts[site] = amount
+      puts payment_amounts[site]
     }
 
 =begin
